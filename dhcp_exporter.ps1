@@ -25,10 +25,9 @@ $dhcpStatisticsReserved         = New-MetricDescriptor -Name "dhcp_statistics_sc
 $dhcpStatisticsPending          = New-MetricDescriptor -Name "dhcp_statistics_scope_pending"        -Type gauge -Help "Count of pending IPs in the scope. (??)" -Labels "scope_id","subnet_mask","name","state","start_range","end_range"
 
 function collector () {
-    $serverStatistics = Get-DhcpServerv4Statistics  -ComputerName dhcp01-event
-    $scopes = Get-DhcpServerv4Scope                 -ComputerName dhcp01-event
-    $labels = ($scope.ScopeId, $scope.SubnetMask, $scope.Name, $scope.State, $scope.StartRange, $scope.EndRange)
-
+    $serverStatistics = Get-DhcpServerv4Statistics
+    $scopes = Get-DhcpServerv4Scope
+    
     $free         = @()
     $inUse        = @()
     $percentInUse = @()
@@ -36,7 +35,8 @@ function collector () {
     $pending      = @()
 
     foreach ($scope in $scopes){
-        $scope_details = Get-DhcpServerv4ScopeStatistics -ComputerName dhcp01-event -ScopeId $scope.ScopeId
+        $labels = ($scope.ScopeId, $scope.SubnetMask, $scope.Name, $scope.State, $scope.StartRange, $scope.EndRange)
+        $scope_details = Get-DhcpServerv4ScopeStatistics -ScopeId $scope.ScopeId
         $free         += @{ value = $scope_details.Free            ; labels = $labels }
         $inUse        += @{ value = $scope_details.InUse           ; labels = $labels }
         $percentInUse += @{ value = $scope_details.PercentageInUse ; labels = $labels }

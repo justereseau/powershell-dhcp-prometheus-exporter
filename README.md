@@ -73,18 +73,22 @@ rras_connections{protocol="sstp"} 124
 
 Running a powershell script as a windows service is possible by using [NSSM](https://nssm.cc/download).
 
+```
+choco install nssm
+```
+
 Use the snippet below to install it as a service:
 
 ```powershell
-$serviceName = 'MyExporter'
-$nssm = "c:\path\to\nssm.exe"
+$serviceName = 'DHCP Exporter'
+$nssm = (Get-Command nssm).Source
 $powershell = (Get-Command powershell).Source
-$scriptPath = 'c:\program files\your_exporter\exporter.ps1'
+$scriptPath = 'c:\Program Files\PrometheusExporters\powershell-dhcp-prometheus-exporter\dhcp_exporter.ps1'
 $arguments = '-ExecutionPolicy Bypass -NoProfile -File """{0}"""' -f $scriptPath
 
 & $nssm install $serviceName $powershell $arguments
 Start-Service $serviceName
 
 # Substitute the port below with the one you picked for your exporter
-New-NetFirewallRule -DisplayName "My Exporter" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 9700
+New-NetFirewallRule -DisplayName $serviceName -Direction Inbound -Action Allow -Protocol TCP -LocalPort 9700
 ```

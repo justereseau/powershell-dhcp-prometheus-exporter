@@ -1,10 +1,6 @@
 # PowerShell Prometheus Client
 
-[![](https://img.shields.io/powershellgallery/v/PrometheusExporter.svg)](https://www.powershellgallery.com/packages/PrometheusExporter)
-
-This Powershell module makes it easy to build a custom prometheus exporter based on PowerShell.
-
-It's inspired and based on the Go client and works in sort of the same way.
+This is a prometheus exporter wor Windows DHCP.
 
 ## Installing
 
@@ -12,61 +8,82 @@ It's inspired and based on the Go client and works in sort of the same way.
 Install-Module -Name PrometheusExporter
 ```
 
-## Usage
-
-All steps below are combined in the [example.ps1](example.ps1) file in this repository.
-
-First, import this module
-
-```powershell
-Import-Module PrometheusExporter
-```
-
-Next, define metric descriptors. These describe your metrics, their labels, type and helptext.
-
-```powershell
-$TotalConnections   = New-MetricDescriptor -Name "rras_connections_total" -Type counter -Help "Total connections since server start"
-$CurrentConnections = New-MetricDescriptor -Name "rras_connections" -Type gauge -Help "Current established connections" -Labels "protocol"
-```
-
-The scraping is done via a collector function which returns metrics. Below is an example of scraping RRAS server statistics.
-
-```powershell
-function collector () {
-    $RRASConnections = Get-RemoteAccessConnectionStatistics
-    $TotalCurrent = $RRASConnections.count
-    $IKEv2 = @($RRASConnections | Where-Object {$_.TunnelType -eq "Ikev2"}).count
-    $SSTP = @($RRASConnections | Where-Object {$_.TunnelType -eq "Sstp"}).count
-    $Cumulative = (Get-RemoteAccessConnectionStatisticsSummary).TotalCumulativeConnections
-
-    @(
-        New-Metric -MetricDesc $TotalConnections -Value $Cumulative
-        New-Metric -MetricDesc $CurrentConnections -Value $TotalCurrent -Labels ("all")
-        New-Metric -MetricDesc $CurrentConnections -Value $IKEv2 -Labels ("ikev2")
-        New-Metric -MetricDesc $CurrentConnections -Value $SSTP -Labels ("sstp")
-    )
-}
-```
-
-A final step is building a new exporter and starting it:
-
-```powershell
-$exp = New-PrometheusExporter -Port 9700
-Register-Collector -Exporter $exp -Collector $Function:collector
-$exp.Start()
-```
+## Example
 
 If you now open http://localhost:9700 in your browser, you will see the metrics displayed.
 
 ```
-# HELP rras_connections_total Total connections since server start
-# TYPE rras_connections_total counter
-rras_connections_total 8487
-# HELP rras_connections Current established connections
-# TYPE rras_connections gauge
-rras_connections{protocol="all"} 563
-rras_connections{protocol="ikev2"} 439
-rras_connections{protocol="sstp"} 124
+# HELP dhcp_statistics_total_scopes_count Count of scopes in the selected server.
+# TYPE dhcp_statistics_total_scopes_count gauge
+dhcp_statistics_total_scopes_count 2
+# HELP dhcp_statistics_total_scopes_with_delay_count Count of delayed scopes in the selected server.
+# TYPE dhcp_statistics_total_scopes_with_delay_count gauge
+dhcp_statistics_total_scopes_with_delay_count 0
+# HELP dhcp_statistics_total_addresses_count Count of addresses managed by the selected server.
+# TYPE dhcp_statistics_total_addresses_count gauge
+dhcp_statistics_total_addresses_count 482
+# HELP dhcp_statistics_total_addresses_in_use_count Count of addresses with a lease on the selected server.
+# TYPE dhcp_statistics_total_addresses_in_use_count gauge
+dhcp_statistics_total_addresses_in_use_count 0
+# HELP dhcp_statistics_total_addresses_available_count Count of addresses available in the selected server.
+# TYPE dhcp_statistics_total_addresses_available_count gauge
+dhcp_statistics_total_addresses_available_count 482
+# HELP dhcp_statistics_total_percentage_in_use Percent of addresses in use in the selected server.
+# TYPE dhcp_statistics_total_percentage_in_use gauge
+dhcp_statistics_total_percentage_in_use 0
+# HELP dhcp_statistics_total_percentage_pending_offers Percent of addresses pending offers in the selected server.
+# TYPE dhcp_statistics_total_percentage_pending_offers gauge
+dhcp_statistics_total_percentage_pending_offers 0
+# HELP dhcp_statistics_total_percentage_available Percent of addresses available in the current server.
+# TYPE dhcp_statistics_total_percentage_available gauge
+dhcp_statistics_total_percentage_available 100
+# HELP dhcp_statistics_total_discovers TBD
+# TYPE dhcp_statistics_total_discovers counter
+dhcp_statistics_total_discovers 22
+# HELP dhcp_statistics_total_offers TBD
+# TYPE dhcp_statistics_total_offers counter
+dhcp_statistics_total_offers 0
+# HELP dhcp_statistics_total_pending_offers TBD
+# TYPE dhcp_statistics_total_pending_offers counter
+dhcp_statistics_total_pending_offers 0
+# HELP dhcp_statistics_total_delayed_offers TBD
+# TYPE dhcp_statistics_total_delayed_offers counter
+dhcp_statistics_total_delayed_offers 0
+# HELP dhcp_statistics_total_requests TBD
+# TYPE dhcp_statistics_total_requests counter
+dhcp_statistics_total_requests 0
+# HELP dhcp_statistics_total_acks TBD
+# TYPE dhcp_statistics_total_acks counter
+dhcp_statistics_total_acks 0
+# HELP dhcp_statistics_total_naks TBD
+# TYPE dhcp_statistics_total_naks counter
+dhcp_statistics_total_naks 0
+# HELP dhcp_statistics_total_declines TBD
+# TYPE dhcp_statistics_total_declines counter
+dhcp_statistics_total_declines 0
+# HELP dhcp_statistics_total_releases TBD
+# TYPE dhcp_statistics_total_releases counter
+dhcp_statistics_total_releases 0
+# HELP dhcp_statistics_scope_free_count Count of free IPs in the scope.
+# TYPE dhcp_statistics_scope_free_count gauge
+dhcp_statistics_scope_free_count{scope_id="10.0.1.0",subnet_mask="255.255.255.0",name="Test1",state="Active",start_range="10.0.1.10",end_range="10.0.1.250"} 241
+dhcp_statistics_scope_free_count{scope_id="10.0.2.0",subnet_mask="255.255.255.0",name="Tets2",state="Active",start_range="10.0.2.10",end_range="10.0.2.250"} 241
+# HELP dhcp_statistics_scope_in_use_count Count of used IPs in the scope.
+# TYPE dhcp_statistics_scope_in_use_count gauge
+dhcp_statistics_scope_in_use_count{scope_id="10.0.1.0",subnet_mask="255.255.255.0",name="Test1",state="Active",start_range="10.0.1.10",end_range="10.0.1.250"} 0
+dhcp_statistics_scope_in_use_count{scope_id="10.0.2.0",subnet_mask="255.255.255.0",name="Tets2",state="Active",start_range="10.0.2.10",end_range="10.0.2.250"} 0
+# HELP dhcp_statistics_scope_in_use_percent Percentage of usage of the scope.
+# TYPE dhcp_statistics_scope_in_use_percent gauge
+dhcp_statistics_scope_in_use_percent{scope_id="10.0.1.0",subnet_mask="255.255.255.0",name="Test1",state="Active",start_range="10.0.1.10",end_range="10.0.1.250"} 0
+dhcp_statistics_scope_in_use_percent{scope_id="10.0.2.0",subnet_mask="255.255.255.0",name="Tets2",state="Active",start_range="10.0.2.10",end_range="10.0.2.250"} 0
+# HELP dhcp_statistics_scope_reserved_count Count of IP reservations in the scope.
+# TYPE dhcp_statistics_scope_reserved_count gauge
+dhcp_statistics_scope_reserved_count{scope_id="10.0.1.0",subnet_mask="255.255.255.0",name="Test1",state="Active",start_range="10.0.1.10",end_range="10.0.1.250"} 0
+dhcp_statistics_scope_reserved_count{scope_id="10.0.2.0",subnet_mask="255.255.255.0",name="Tets2",state="Active",start_range="10.0.2.10",end_range="10.0.2.250"} 0
+# HELP dhcp_statistics_scope_pending Count of pending IPs in the scope. (??)
+# TYPE dhcp_statistics_scope_pending gauge
+dhcp_statistics_scope_pending{scope_id="10.0.1.0",subnet_mask="255.255.255.0",name="Test1",state="Active",start_range="10.0.1.10",end_range="10.0.1.250"} 0
+dhcp_statistics_scope_pending{scope_id="10.0.2.0",subnet_mask="255.255.255.0",name="Tets2",state="Active",start_range="10.0.2.10",end_range="10.0.2.250"} 0
 ```
 
 ## Running as a service
